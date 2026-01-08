@@ -8,15 +8,25 @@ app = FastAPI()
 # In a real production app, you might use Redis or a DB for this
 memory = ReplayBuffer(capacity=5000)
 
-@app.post("/log-experience")
-async def log_experience(state: list, action: int, reward: float, next_state: list, done: bool):
-    """
-    Every time Priya finishes a task, the frontend calls this 
-    to feed the AI's memory.
-    """
-    memory.add(state, action, reward, next_state, done)
+# File: app/main.py
+@app.post("/analyze-brain-state")
+async def analyze_state(state: StudentState):
+    # Pillar 1: Calculate Knowledge/Retention
+    retention_report = {}
+    for topic, last_seen in state.last_interaction.items():
+        stability = state.retention_strength.get(topic, 0)
+        retention_report[topic] = calculate_retention(last_seen, stability)
+    
+    # Pillar 2-4: Simplified Logic for the Diagnostic Report
+    avg_speed = sum(state.response_speed.values()) / len(state.response_speed) if state.response_speed else 0
     
     return {
-        "status": "Experience Saved",
-        "current_buffer_size": len(memory)
+        "student_id": state.student_id,
+        "neuro_scorecard": {
+            "knowledge_retention": retention_report,
+            "fluency_speed": "High Efficiency" if avg_speed < 15 else "Needs Drills",
+            "brain_connectivity": f"{state.connectivity_score * 100}%",
+            "resilience_grit": "Strong Recovery" if state.resilience_factor > 0.7 else "Support Needed"
+        },
+        "stress_level": "Optimal Flow" if state.current_stress_level < 0.7 else "Overloaded"
     }
